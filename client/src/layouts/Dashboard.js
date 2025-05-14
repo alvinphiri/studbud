@@ -1,22 +1,31 @@
-import React from "react";
-import { NavLink, Outlet } from "react-router-dom";
+// ./layouts/Dashboard.js
+import React from 'react';
+import { Outlet, Link } from 'react-router-dom'; // Import Outlet and Link
 
-const Dashboard = () => {
+function Dashboard() {
   return (
-    <div className="dashboard-container">
-      <nav>
-        <NavLink to="/upload">Upload</NavLink>
-        <NavLink to="/summary">Summary</NavLink>
-        <NavLink to="/flashcards">Flashcards</NavLink>
-        <NavLink to="/quiz">Quiz</NavLink>
-        <NavLink to="/tutor">Tutor</NavLink>
-        <NavLink to="/tracker">Progress</NavLink>
-      </nav>
+    <div>
+      <header>
+        <h1>Study Application Dashboard</h1>
+        <nav style={{ marginBottom: '20px' }}>
+          <Link to="/upload" style={{ marginRight: '10px' }}>Upload</Link>
+          <Link to="/summary" style={{ marginRight: '10px' }}>Summary</Link>
+          <Link to="/flashcards" style={{ marginRight: '10px' }}>Flashcards</Link>
+          <Link to="/quiz" style={{ marginRight: '10px' }}>Quiz</Link>
+          <Link to="/tutor" style={{ marginRight: '10px' }}>Tutor</Link>
+          <Link to="/tracker">Study Tracker</Link>
+        </nav>
+      </header>
+      <hr />
       <main>
+        {/* Child route components (Upload, Summary, etc.) will render here */}
         <Outlet />
       </main>
+      <footer style={{ marginTop: '20px', borderTop: '1px solid #ccc', paddingTop: '10px' }}>
+        <p>&copy; {new Date().getFullYear()} Your Study App</p>
+      </footer>
     </div>
   );
-};
+}
 
-export default Dashboard;
+export default Dashboard; // This is the crucial part: default export
