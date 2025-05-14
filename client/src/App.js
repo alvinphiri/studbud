@@ -1,11 +1,11 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Dashboard from "./layouts/Dashboard";
 import Upload from "./components/Landing";
-import Summary from "./components/TranscriptSummary";
+import Summary from "./components/Summary";
 import Flashcards from "./components/Flashcards";
 import Quiz from "./components/Quiz";
 import Tutor from "./components/Tutor";
-import Tracker from "./components/Tracker";
+import Tracker from "./components/StudyTracker";
 
 function App() {
   return (
