@@ -3,20 +3,35 @@ import { AppContext } from "../context/AppContext";
 import { generateQuiz } from "../utils/api";
 
 const Quiz = () => {
-  const { summary, quiz, setQuiz } = useContext(AppContext);
+  const { summary, quiz = [], setQuiz } = useContext(AppContext); // default quiz to []
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [score, setScore] = useState(null);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleGenerate = async () => {
+    if (!summary || summary.trim() === "") {
+      alert("Summary is empty. Generate a summary first.");
+      return;
+    }
+
     setLoading(true);
-    const questions = await generateQuiz(summary);
-    setQuiz(questions);
-    setSelectedAnswers({});
-    setScore(null);
-    setSubmitted(false);
-    setLoading(false);
+    try {
+      const questions = await generateQuiz(summary);
+      if (!questions || questions.length === 0) {
+        alert("No quiz questions generated.");
+        return;
+      }
+      setQuiz(questions);
+      setSelectedAnswers({});
+      setScore(null);
+      setSubmitted(false);
+    } catch (err) {
+      console.error("Quiz generation failed:", err);
+      alert("Failed to generate quiz.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleOptionSelect = (questionIndex, option) => {
@@ -41,14 +56,16 @@ const Quiz = () => {
     <section>
       <h2>Quiz</h2>
       <button onClick={handleGenerate}>Generate Quiz</button>
+
       {loading && <p>Generating...</p>}
+
       {quiz.length > 0 && !submitted && (
         <div>
           <form>
             {quiz.map((q, idx) => (
               <div key={idx} style={{ marginBottom: "1em" }}>
                 <p><strong>{idx + 1}. {q.question}</strong></p>
-                {q.options.map((opt, i) => (
+                {q.options && q.options.map((opt, i) => (
                   <label key={i} style={{ display: "block" }}>
                     <input
                       type="radio"
@@ -66,6 +83,7 @@ const Quiz = () => {
           <button onClick={handleSubmit}>Submit Answers</button>
         </div>
       )}
+
       {submitted && (
         <div>
           <h3>Your Score: {score} / {quiz.length}</h3>

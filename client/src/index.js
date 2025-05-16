@@ -3,11 +3,21 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { AppContext } from "./context/AppContext";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <AppContext.Provider
+      value={{
+        summary: "",           // 🔥 change these when you hook real data
+        transcript: "",
+        flashcards: [],
+        quizData: [],
+      }}
+    >
+      <App />
+    </AppContext.Provider>
   </React.StrictMode>
 );
 
