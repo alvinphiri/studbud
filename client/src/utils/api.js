@@ -1,6 +1,6 @@
 export const uploadAudioForTranscription = async (file) => {
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append("audioFile", file);
 
   try {
     const response = await fetch("/api/transcribe", { // Ensure '/api/transcribe' is your correct backend endpoint
