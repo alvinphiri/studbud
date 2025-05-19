@@ -7,7 +7,8 @@ export const uploadAudioForTranscription = async (file) => {
       method: "POST",
       body: formData,
     });
-
+   
+    
     if (!response.ok) {
       // Try to get a more specific error message from the response body if available
       const errorData = await response.json().catch(() => ({ message: `HTTP error ${response.status}` }));
