@@ -4,52 +4,69 @@ const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
+const ffmpeg = require("fluent-ffmpeg");
+const OpenAI = require('openai');
+
 dotenv.config();
 
-const OpenAI = require('openai');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 app.use(cors());
 app.use(express.json());
 
-// Multer setup to save uploaded files to 'uploads' folder
-const upload = multer({ dest: 'uploads/' });
+// Multer setup
+const upload = multer({
+  dest: 'uploads/',
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
+});
 
-// Routes for your other features (adjust paths & requires as needed)
-app.use("/api/tracker", require("./routes/tracker.js"));
-app.use("/api/tutor", require("./routes/tutor.js"));
+// Re-encode to safe mp3 for OpenAI
+const reencodeToMp3 = (inputPath, outputPath) => {
+  return new Promise((resolve, reject) => {
+    ffmpeg(inputPath)
+      .audioCodec("libmp3lame")
+      .audioBitrate("128k")
+      .outputOptions(["-ar 44100", "-ac 2"])
+      .on("end", () => resolve(outputPath))
+      .on("error", reject)
+      .save(outputPath);
+  });
+};
 
-// Transcription endpoint — single route, multer handles file upload
-app.post('/api/transcribe', upload.single('file'), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No audio file uploaded' });
-  }
-
+// 🔥 Main transcription route
+app.post("/upload", upload.single("audioFile"), async (req, res) => {
   try {
-    const filePath = path.join(__dirname, req.file.path);
-    console.log('Processing file:', filePath);
+    const inputPath = req.file.path;
+    const outputPath = path.join("uploads", `cleaned-${Date.now()}.mp3`);
+
+    await reencodeToMp3(inputPath, outputPath);
 
     const transcription = await openai.audio.transcriptions.create({
-      file: fs.createReadStream(filePath),
-      model: 'whisper-1',
+      file: fs.createReadStream(outputPath),
+      model: "whisper-1",
     });
 
-    // Delete temp file after transcription
-    fs.unlinkSync(filePath);
+    fs.unlinkSync(inputPath);
+    fs.unlinkSync(outputPath);
 
-    res.json({ transcript: transcription.text });
-  } catch (err) {
-    console.error('Transcription error:', err);
-    res.status(500).json({ error: 'Failed to transcribe audio' });
+    res.json({ transcription: transcription.text });
+  } catch (error) {
+    console.error("Transcription error:", error);
+    res.status(500).json({ error: "Failed to transcribe audio." });
   }
 });
 
-// Summarization endpoint
+// ✂️ DELETE THIS DUPLICATE UNLESS YOU NEED RAW INPUTS
+/*
+app.post('/api/transcribe', upload.single('file'), async (req, res) => {
+  ...
+});
+*/
+
+// 🧠 Summarization endpoint
 app.post('/api/summarize', async (req, res) => {
   try {
     const { transcript } = req.body;
@@ -78,9 +95,11 @@ app.post('/api/summarize', async (req, res) => {
   }
 });
 
-// Add more endpoints/routes here as you build out features
+// Routes for other features
+app.use("/api/tracker", require("./routes/tracker.js"));
+app.use("/api/tutor", require("./routes/tutor.js"));
 
-// Start the server
+// Start server
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`🔥 Server running at http://localhost:${PORT}`);
 });

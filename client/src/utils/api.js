@@ -3,7 +3,7 @@ export const uploadAudioForTranscription = async (file) => {
   formData.append("audioFile", file);
 
   try {
-    const response = await fetch("/api/transcribe", { // Ensure '/api/transcribe' is your correct backend endpoint
+    const response = await fetch("/upload", { // Ensure '/api/transcribe' is your correct backend endpoint
       method: "POST",
       body: formData,
     });
@@ -16,10 +16,10 @@ export const uploadAudioForTranscription = async (file) => {
     }
 
     const data = await response.json();
-    if (data && typeof data.transcript !== 'undefined') {
-      return data.transcript;
+    if (data && typeof data.transcription !== 'undefined') {
+      return data.transcription;
     } else {
-      throw new Error("Transcript not found in API response");
+      throw new Error("Transcription not found in API response");
     }
   } catch (error) {
     console.error("Error uploading audio for transcription:", error);
@@ -27,14 +27,14 @@ export const uploadAudioForTranscription = async (file) => {
   }
 };
 
-export const generateSummary = async (transcript) => {
+export const generateSummary = async (transcription) => {
   try {
     const response = await fetch("/api/summary", { // Ensure '/api/summary' is your correct backend endpoint
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ transcript }),
+      body: JSON.stringify({ transcription }),
     });
 
     if (!response.ok) {

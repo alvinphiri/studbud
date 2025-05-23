@@ -18,20 +18,20 @@ function Upload() {
     }
 
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('audioFile', file); // ✅ match multer key
 
     try {
       setUploading(true);
       setMessage('');
 
-      const res = await axios.post('/api/transcribe', formData, {
+      const res = await axios.post('/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
       setMessage('Upload successful!');
-      console.log(res.data); // You can store this in context or navigate to next page
+      console.log(res.data);
     } catch (err) {
       console.error(err);
       setMessage('Upload failed.');
@@ -49,6 +49,7 @@ function Upload() {
           {uploading ? 'Uploading...' : 'Upload'}
         </button>
       </form>
+      {file && <p>Selected: {file.name}</p>}
       {message && <p>{message}</p>}
     </div>
   );

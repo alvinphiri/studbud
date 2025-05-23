@@ -7,7 +7,7 @@ const FormData = require("form-data");
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
-router.post("/", upload.single("file"), async (req, res) => {
+router.post("/", upload.single("audiofile"), async (req, res) => {
   try {
     const filePath = req.file.path;
     const formData = new FormData();
