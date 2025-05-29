@@ -1,3 +1,4 @@
+//AppContext.js
 import { createContext, useState } from "react";
 
 export const AppContext = createContext();
@@ -8,6 +9,7 @@ export const AppProvider = ({ children }) => {
   const [summary, setSummary] = useState("");
   const [flashcards, setFlashcards] = useState([]);
   const [quiz, setQuiz] = useState([]);
+  const[message, setMessage] = useState("");
   
   return (
     <AppContext.Provider value={{
@@ -15,7 +17,8 @@ export const AppProvider = ({ children }) => {
       transcript, setTranscript,
       summary, setSummary,
       flashcards, setFlashcards,
-      quiz, setQuiz
+      quiz, setQuiz,
+      message, setMessage
     }}>
       {children}
     </AppContext.Provider>

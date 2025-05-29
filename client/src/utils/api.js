@@ -1,6 +1,10 @@
+import axios from 'axios';
+
+
 export const uploadAudioForTranscription = async (file) => {
   const formData = new FormData();
   formData.append("audioFile", file);
+
 
   try {
     const response = await fetch("/upload", { // Ensure '/api/transcribe' is your correct backend endpoint
@@ -8,7 +12,6 @@ export const uploadAudioForTranscription = async (file) => {
       body: formData,
     });
    
-    
     if (!response.ok) {
       // Try to get a more specific error message from the response body if available
       const errorData = await response.json().catch(() => ({ message: `HTTP error ${response.status}` }));
@@ -27,32 +30,63 @@ export const uploadAudioForTranscription = async (file) => {
   }
 };
 
-export const generateSummary = async (transcription) => {
+
+export const generateSummary = async (transcriptionText) => {
   try {
-    const response = await fetch("/api/summary", { // Ensure '/api/summary' is your correct backend endpoint
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ transcription }),
-    });
+    // 1. Determine the correct backend endpoint.
+    //    Your server.js mounts summaryRoutes at '/api/summary'.
+    //    Your routes/summary.js handles POST requests at its root ("/").
+    //    So, the full path should be '/api/summary'.
+    const endpoint = '/api/summary';
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: `HTTP error ${response.status}` }));
-      throw new Error(errorData.message || `HTTP error ${response.status}`);
-    }
+    // 2. Determine the expected request body structure.
+    //    Your backend route (routes/summary.js) expects: { text: "some transcription..." }
+    const payload = { transcript: transcriptionText };
 
-    const data = await response.json();
-    if (data && typeof data.summary !== 'undefined') {
-      return data.summary;
-    } else {
-      throw new Error("Summary not found in API response");
-    }
+    // 3. Make the POST request using axios.
+    //    axios.post(url, data, [config])
+    //    Axios automatically handles JSON.stringify for the data and
+    //    sets 'Content-Type': 'application/json' by default for object payloads.
+    const response = await axios.post(endpoint, payload);
+
+    // 4. Return the data from the response.
+    //    Axios puts the server's response data in the `data` property.
+    return response.data;
+
   } catch (error) {
+    // 5. Handle potential errors.
     console.error("Error generating summary:", error);
-    throw error;
+
+    // It's good practice to throw the error or return a structured error
+    // so the calling code can also handle it.
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error("Error data:", error.response.data);
+      console.error("Error status:", error.response.status);
+      // Re-throw a more specific error or the original error.response
+      throw new Error(error.response.data?.error || `Request failed with status ${error.response.status}`);
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error("Error request:", error.request);
+      throw new Error("No response received from server while generating summary.");
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.error("Error message:", error.message);
+      throw new Error(error.message || "Error setting up request for summary generation.");
+    }
   }
 };
+
+// Example of how you might call this function in a component:
+// async function handleGenerateSummary(transcript) {
+//   try {
+//     const summaryData = await generateSummary(transcript);
+//     // Do something with summaryData
+//   } catch (err) {
+//     // Display error to the user
+//   }
+// }
 
 export const generateFlashcards = async (summary) => {
   try {

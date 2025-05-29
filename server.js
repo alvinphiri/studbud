@@ -1,3 +1,4 @@
+//server.js
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
@@ -96,6 +97,10 @@ app.post('/api/summarize', async (req, res) => {
 });
 
 // Routes for other features
+const summaryRoutes = require("./routes/summary.js");
+
+app.use("/api/summary", summaryRoutes);
+
 app.use("/api/tracker", require("./routes/tracker.js"));
 app.use("/api/tutor", require("./routes/tutor.js"));
 

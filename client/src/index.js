@@ -1,23 +1,17 @@
+//index.js
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { AppContext } from "./context/AppContext";
+import { AppProvider } from "./context/AppContext"; // ✅ Correct import
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <AppContext.Provider
-      value={{
-        summary: "",           // 🔥 change these when you hook real data
-        transcript: "",
-        flashcards: [],
-        quizData: [],
-      }}
-    >
+    <AppProvider>
       <App />
-    </AppContext.Provider>
+    </AppProvider>
   </React.StrictMode>
 );
 

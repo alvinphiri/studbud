@@ -1,12 +1,19 @@
-import React, { useState } from 'react';
+//landing.js
 import axios from 'axios';
+import React, { useState, useContext } from 'react';
+import { AppContext } from '../context/AppContext'; // import context
+import { generateSummary } from '../utils/api';
 
 function Upload() {
+  const context = useContext(AppContext);
+
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [transcript, setTranscript] = useState('');
+  // Remove local useState for transcript and message
   const [copySuccess, setCopySuccess] = useState('');
+
+  const { transcript, setTranscript, summary, setSummary, message, setMessage} = useContext(AppContext);
+
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -26,6 +33,7 @@ function Upload() {
       setUploading(true);
       setMessage('');
       setTranscript('');
+      setSummary('');
       setCopySuccess('');
 
       const res = await axios.post('/upload', formData, {
@@ -39,9 +47,14 @@ function Upload() {
       setTranscript(transcript);
       
       setMessage('Upload successful!');
+       // 🔥 generate summary automatically
+       const summaryData = await generateSummary(transcript);
+       setSummary(summaryData.summary || '');
     } catch (err) {
       console.error(err);
       setMessage('Upload failed.');
+      console.log('Context:', context);
+      // sanity check
     } finally {
       setUploading(false);
     }
