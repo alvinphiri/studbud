@@ -1,48 +1,48 @@
+// routes/flashcards.js
 const express = require("express");
 const axios = require("axios");
 const router = express.Router();
+const OpenAI = require('openai');
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-router.post("/", async (req, res) => {
-  const { summary } = req.body;
-
+router.post('/', async (req, res) => {
   try {
+    const { summary } = req.body;
+    if (!summary) return res.status(400).json({ error: 'Missing summary.' });
+
     const prompt = `
-Based on the following summary, generate a list of 5 study flashcards in JSON format. 
-Each flashcard should include a "question" and an "answer".
+    Based on the following summary, create flashcards for student revision.
+    Format: JSON array of { "question": "...", "answer": "..." } objects.
+    Focus on key points, definitions, and important takeaways.
 
-Summary:
-${summary}
+    Summary:
+    ${summary}
+    `;
 
-Format:
-[
-  { "question": "...", "answer": "..." },
-  ...
-]
-`;
-
-    const response = await axios.post("https://api.openai.com/v1/chat/completions", {
-      model: "gpt-3.5-turbo",
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4',
       messages: [
-        { role: "system", content: "You are a flashcard generator for students." },
-        { role: "user", content: prompt }
+        { role: 'system', content: 'You are an educational assistant that generates flashcards.' },
+        { role: 'user', content: prompt },
       ],
-      temperature: 0.5,
-    }, {
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json"
-      }
     });
 
-    const raw = response.data.choices[0].message.content;
+    const flashcardsText = completion.choices[0].message.content;
 
-    // Try to parse the JSON-like response safely
-    const cards = JSON.parse(raw);
-    res.json({ flashcards: cards });
+    // Try to parse JSON from model response
+    let flashcards;
+    try {
+      flashcards = JSON.parse(flashcardsText);
+    } catch (err) {
+      console.warn('Flashcard parse fail. Sending raw text.');
+      return res.json({ flashcards: [], raw: flashcardsText });
+    }
 
-  } catch (error) {
-    console.error(error.response?.data || error.message);
-    res.status(500).json({ error: "Flashcard generation failed" });
+    res.json({ flashcards });
+
+  } catch (err) {
+    console.error('Flashcard generation error:', err);
+    res.status(500).json({ error: 'Failed to generate flashcards' });
   }
 });
 

@@ -95,6 +95,8 @@ app.post('/api/summarize', async (req, res) => {
     res.status(500).json({ error: 'Failed to summarize transcript' });
   }
 });
+//route for flashcards
+app.use("/api/flashcards", require("./routes/flashcards.js"));
 
 // Routes for other features
 const summaryRoutes = require("./routes/summary.js");
