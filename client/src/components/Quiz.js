@@ -1,109 +1,99 @@
-import React, { useContext, useState } from "react";
-import { AppContext } from "../context/AppContext";
-import { generateQuiz } from "../utils/api";
+// Quiz.js
+import React, { useContext, useState } from 'react';
+import { AppContext } from '../context/AppContext';
+import { generateQuiz } from '../utils/api';
 
 const Quiz = () => {
-  const { summary, quiz = [], setQuiz } = useContext(AppContext); // default quiz to []
-  const [selectedAnswers, setSelectedAnswers] = useState({});
-  const [score, setScore] = useState(null);
-  const [submitted, setSubmitted] = useState(false);
+  const { summary } = useContext(AppContext);
+  const [quiz, setQuiz] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [selectedAnswers, setSelectedAnswers] = useState({});
+  const [submitted, setSubmitted] = useState(false);
 
-  const handleGenerate = async () => {
-    if (!summary || summary.trim() === "") {
-      alert("Summary is empty. Generate a summary first.");
-      return;
-    }
-
+  const handleGenerateQuiz = async () => {
     setLoading(true);
+    setError('');
+    setQuiz([]);
+    setSelectedAnswers({});
+    setSubmitted(false);
+
     try {
-      const questions = await generateQuiz(summary);
-      if (!questions || questions.length === 0) {
-        alert("No quiz questions generated.");
-        return;
+      const result = await generateQuiz(summary);
+      if (Array.isArray(result)) {
+        setQuiz(result);
+      } else {
+        setError('Invalid quiz format');
       }
-      setQuiz(questions);
-      setSelectedAnswers({});
-      setScore(null);
-      setSubmitted(false);
     } catch (err) {
-      console.error("Quiz generation failed:", err);
-      alert("Failed to generate quiz.");
+      setError(err.message || 'Quiz generation failed');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleOptionSelect = (questionIndex, option) => {
-    setSelectedAnswers((prev) => ({
-      ...prev,
-      [questionIndex]: option,
-    }));
+  const handleSelect = (qIndex, option) => {
+    if (submitted) return;
+    setSelectedAnswers((prev) => ({ ...prev, [qIndex]: option }));
   };
 
   const handleSubmit = () => {
-    let correctCount = 0;
-    quiz.forEach((q, index) => {
-      if (selectedAnswers[index] === q.answer) {
-        correctCount++;
-      }
-    });
-    setScore(correctCount);
     setSubmitted(true);
   };
 
+  const getScore = () => {
+    return quiz.reduce((score, q, idx) => {
+      if (selectedAnswers[idx] === q.answer) {
+        return score + 1;
+      }
+      return score;
+    }, 0);
+  };
+
   return (
-    <section>
+    <div>
       <h2>Quiz</h2>
-      <button onClick={handleGenerate}>Generate Quiz</button>
+      <button onClick={handleGenerateQuiz} disabled={loading || !summary}>
+        {loading ? 'Generating Quiz...' : 'Generate Quiz'}
+      </button>
 
-      {loading && <p>Generating...</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
 
-      {quiz.length > 0 && !submitted && (
+      {quiz.length > 0 && (
         <div>
-          <form>
-            {quiz.map((q, idx) => (
-              <div key={idx} style={{ marginBottom: "1em" }}>
-                <p><strong>{idx + 1}. {q.question}</strong></p>
-                {q.options && q.options.map((opt, i) => (
-                  <label key={i} style={{ display: "block" }}>
+          {quiz.map((q, idx) => (
+            <div key={idx} style={{ margin: '15px 0', padding: '10px', border: '1px solid #ccc' }}>
+              <p><strong>{idx + 1}. {q.question}</strong></p>
+              {q.options.map((opt, oIdx) => (
+                <div key={oIdx}>
+                  <label>
                     <input
                       type="radio"
-                      name={`question-${idx}`}
+                      name={`q${idx}`}
                       value={opt}
+                      disabled={submitted}
                       checked={selectedAnswers[idx] === opt}
-                      onChange={() => handleOptionSelect(idx, opt)}
+                      onChange={() => handleSelect(idx, opt)}
                     />
                     {opt}
                   </label>
-                ))}
-              </div>
-            ))}
-          </form>
-          <button onClick={handleSubmit}>Submit Answers</button>
-        </div>
-      )}
-
-      {submitted && (
-        <div>
-          <h3>Your Score: {score} / {quiz.length}</h3>
-          <ul>
-            {quiz.map((q, idx) => (
-              <li key={idx}>
-                <strong>Q{idx + 1}:</strong> {q.question} <br />
-                <span>
-                  <strong>Your Answer:</strong> {selectedAnswers[idx] || "None"} <br />
-                  <strong>Correct Answer:</strong> {q.answer}
-                </span>
-                <p style={{ color: selectedAnswers[idx] === q.answer ? "green" : "red" }}>
-                  {selectedAnswers[idx] === q.answer ? "✔ Correct" : "✖ Incorrect"}
+                </div>
+              ))}
+              {submitted && (
+                <p style={{ color: selectedAnswers[idx] === q.answer ? 'green' : 'red' }}>
+                  Correct Answer: {q.answer}
                 </p>
-              </li>
-            ))}
-          </ul>
+              )}
+            </div>
+          ))}
+          {!submitted ? (
+            <button onClick={handleSubmit}>Submit Quiz</button>
+          ) : (
+            <p><strong>Score: {getScore()} / {quiz.length}</strong></p>
+          )}
         </div>
       )}
-    </section>
+    </div>
   );
 };
 

@@ -98,6 +98,9 @@ app.post('/api/summarize', async (req, res) => {
 //route for flashcards
 app.use("/api/flashcards", require("./routes/flashcards.js"));
 
+// Add quiz route
+app.use("/api/quiz", require("./routes/quiz.js"));
+
 // Routes for other features
 const summaryRoutes = require("./routes/summary.js");
 
