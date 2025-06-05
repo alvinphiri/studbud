@@ -40,7 +40,7 @@ const Quiz = () => {
   const handleSubmit = () => {
     setSubmitted(true);
   };
-
+  
   const getScore = () => {
     return quiz.reduce((score, q, idx) => {
       if (selectedAnswers[idx] === q.answer) {

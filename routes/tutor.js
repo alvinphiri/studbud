@@ -1,30 +1,51 @@
+// routes/tutor.js
 const express = require("express");
 const router = express.Router();
-const { openai } = require("../node_modules/openai");
+const axios = require("axios");
 
-router.post("/ask", async (req, res) => {
-  const { userQuestion, summary } = req.body;
+router.post("/", async (req, res) => {
+  const { transcript, question } = req.body;
+
+  if (!transcript || !question) {
+    return res.status(400).json({ error: "Transcript and question are required." });
+  }
 
   try {
-    const completion = await openai.chat.completions.create({
-      messages: [
-        {
-          role: "system",
-          content: `You are a friendly and knowledgeable tutor. Explain things simply and clearly.`,
-        },
-        {
-          role: "user",
-          content: `Here's the content we're discussing:\n${summary}\n\nNow, answer this question: ${userQuestion}`,
-        },
-      ],
-      model: "gpt-4",
-    });
+    const prompt = `
+You're an AI tutor helping a student. Use the following transcript for context.
+Respond to the student's follow-up question clearly and helpfully.
 
-    const answer = completion.choices[0].message.content;
+Transcript:
+${transcript}
+
+Student's Question:
+${question}
+`;
+
+    const response = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model: "gpt-3.5-turbo",
+        messages: [
+          { role: "system", content: "You are a helpful and patient AI tutor for students." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.7
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    const answer = response.data.choices[0].message.content;
     res.json({ answer });
+
   } catch (err) {
-    console.error("Tutor API error:", err.message);
-    res.status(500).json({ error: "Failed to generate tutor response." });
+    console.error("Tutor question error:", err.response?.data || err.message);
+    res.status(500).json({ error: "Failed to process tutor question." });
   }
 });
 
